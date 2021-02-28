@@ -1,7 +1,7 @@
 import { Client, Message, MessageEmbed } from 'discord.js'
-import { EmojiroleModel, ReactionRoleListener, ReactionRoleModel } from '../listeners/reactionRolesListener';
+import { EmojiroleModel, ReactionRoleListener, ReactionRoleModel } from './reactionRolesListener';
 
-import { CommandListener } from './commandListener'
+import { CommandListener } from '../util/commandListener'
 
 export class ReactionRoleCommand extends CommandListener {
     constructor(client : Client) {
@@ -13,11 +13,22 @@ export class ReactionRoleCommand extends CommandListener {
     }
 
     private async _onCommandMatched(args, message : Message) {
-        if(args.length < 4) throw("ReactionRoleCommand: not enough args");
-        if(args.length % 2 != 0) throw("ReactionRoleCommand: arg count mismatch");
+        if(args.length < 4) {
+            this._usage(message, "not enough arguments"); 
+            return;
+        }
+        if(args.length % 2 != 0) {
+            this._usage(message, "emoji/role count mismatch");
+            return;
+        }
 
-        var message = await message.channel.messages.fetch(args[1])
-            .catch( () => {throw("ReactionRoleCommand: invalid message");});
+        var messageTarget = await message.channel.messages.fetch(args[1])
+            .catch( () => {
+                this._usage(message, "invalid message");
+                return null;
+            });
+
+        if(messageTarget === null) return;
 
         var server_id = message.guild.id;
         var channel_id = message.channel.id;
@@ -33,11 +44,11 @@ export class ReactionRoleCommand extends CommandListener {
         args.forEach(async (id, idx) => {
             if(idx % 2 === 0) {
                 var emoji = message.guild.emojis.resolveIdentifier(id);
-                if( emoji === null ) throw("ReactionRoleCommand: invalid emoji");
+                if( emoji === null ) this._usage(message, "invalid emoji");
                 emojiId = id;
             } else {
                 var role = message.guild.roles.resolveID(id);
-                if ( role === null ) throw("ReactionRoleCommand: invalid role");
+                if ( role === null ) this._usage(message, "invalid role");
                 id = id.slice(3, -1);
 
                 emojirolesMap.set(emojiId, id);
@@ -47,7 +58,7 @@ export class ReactionRoleCommand extends CommandListener {
                     role: id
                 }))
 
-                message.react(emojiId);
+                messageTarget.react(emojiId);
             }
         })
 
@@ -70,14 +81,26 @@ export class ReactionRoleCommand extends CommandListener {
         });
 
         const embed = new MessageEmbed()
-            .setTitle(`Reaction Role Message Created`)
+            .setTitle(`Reaction roles added to message`)
             .setColor('#34C759')
             .addFields(
                 {name: '**Emoji**', value: emojiString, inline: true},
-                {name: '**Roles**', value: roleString, inline: true},
+                {name: '**Roles**', value: roleString, inline: true}
             )
             .setURL(`https://discord.com/channels/${server_id}/${channel_id}/${message_id}`);
 
+        message.channel.send(embed);
+    }
+    
+    private async _usage(message, error) {
+        const embed = new MessageEmbed()
+            .setTitle(`Reaction Roles`)
+            .setDescription(`Allow users to react to a specified message with emojis to set their role`)
+            .setColor('#357EC7')
+            .addFields(
+                {name: '**Usage**', value: `\`!reactionroles $message_id $emoji_1 $rank_1 $emoji_2 $rank_2 ...\``, inline: true}
+            );
+        
         message.channel.send(embed);
     }
 }

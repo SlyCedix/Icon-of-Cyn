@@ -1,5 +1,5 @@
-import {Bot} from './bot';
-import {Database} from './database'
+import {Bot} from './util/bot';
+import {Database} from './util/database'
 import config from './config.json';
 
 const database = new Database(config.mongoString);

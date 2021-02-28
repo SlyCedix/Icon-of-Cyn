@@ -2,10 +2,10 @@ import { Channel, Client, Message, TextChannel } from 'discord.js';
 import { EventEmitter } from 'events';
 import { Database } from './database';
 
-import { ReactionRoleListener, ReactionRoleModel } from './listeners/reactionRolesListener'
+import { ReactionRoleListener, ReactionRoleModel } from '../reactionRoles/reactionRolesListener'
 
 import mongoose from 'mongoose';
-import { ReactionRoleCommand } from './commands/reactionRolesCommand';
+import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand';
 
 export class Bot {
     private client : Client;

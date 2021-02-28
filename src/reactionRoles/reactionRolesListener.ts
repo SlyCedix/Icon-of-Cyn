@@ -1,4 +1,4 @@
-import { Client, Emoji } from 'discord.js';
+import { Client } from 'discord.js';
 import mongoose, { Schema } from 'mongoose';
 
 export class ReactionRoleListener {

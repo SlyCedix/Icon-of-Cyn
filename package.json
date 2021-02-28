@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "mongoose": "^5.11.15"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.31"
+  }
+}

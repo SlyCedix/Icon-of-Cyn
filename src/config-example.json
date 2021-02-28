@@ -1,0 +1,4 @@
+{
+    "token": "Bot Token Here",
+    "mongoString": "MongoDB Atlas Connection String Here"
+}

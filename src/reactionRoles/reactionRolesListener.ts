@@ -1,20 +1,41 @@
-import { Client } from 'discord.js';
-import mongoose, { Schema } from 'mongoose';
+import { Client} from 'discord.js';
+
+export class EmojiRole {
+    emoji : string;
+    role : string;
+
+    constructor (emoji : string,
+                 role : string) {
+        this.emoji = emoji;
+        this.role = role;
+    }
+}
+
+export class ReactionRole {
+    server_id : string;
+    channel_id : string;
+    message_id : string;
+    emojiroles : Array<EmojiRole>;
+
+    constructor (server_id : string,
+                 channel_id : string,
+                 message_id : string,
+                 emojiroles : Array<EmojiRole>) {
+        this.server_id = server_id;
+        this.channel_id = channel_id;
+        this.message_id = message_id;
+        this.emojiroles = emojiroles;
+    }
+}
 
 export class ReactionRoleListener {
     private client : Client;
-    private server_id : string;
-    private message_id : string;
-    private emojiroles : Map<string, string>;
+    private reactionRole : ReactionRole;
 
     constructor( client : Client,
-                 server_id : string,
-                 message_id : string,
-                 emojiroles : Map<string, string> ) {
+                reactionRole : ReactionRole) {
         this.client = client;
-        this.server_id = server_id;
-        this.message_id = message_id;
-        this.emojiroles = emojiroles;
+        this.reactionRole = reactionRole;
 
         this.client.on('messageReactionAdd', (reaction, user) => this._onMessageReactionAdd(reaction, user));
         this.client.on('messageReactionRemove', (reaction, user) => this._onMessageReactionRemove(reaction, user));
@@ -39,12 +60,14 @@ export class ReactionRoleListener {
             };
         }
 
-        if(reaction.message.id === this.message_id) {
-            var server = this.client.guilds.cache.get(this.server_id);
-            this.emojiroles.forEach((value, key) => {
-                if (reaction.emoji.toString() === key) {
+        if(user.id === this.client.user.id) return;
+
+        if(reaction.message.id === this.reactionRole.message_id) {
+            var server = this.client.guilds.cache.get(this.reactionRole.server_id);
+            this.reactionRole.emojiroles.forEach((emojiRole) => {
+                if (reaction.emoji.toString() === emojiRole.emoji) {
                     let serverUser = server.members.cache.get(user.id);
-                    const role = server.roles.cache.get(value);
+                    const role = server.roles.cache.get(emojiRole.role);
                     serverUser.roles.add(role);
                 }
             });
@@ -70,12 +93,14 @@ export class ReactionRoleListener {
             };
         }
 
-        if(reaction.message.id === this.message_id) {
-            var server = this.client.guilds.cache.get(this.server_id);
-            this.emojiroles.forEach((value, key) => {
-                if (reaction.emoji.toString() === key) {
-                    const role = server.roles.cache.get(value);
+        if(user.id === this.client.user.id) return;
+
+        if(reaction.message.id === this.reactionRole.message_id) {
+            var server = this.client.guilds.cache.get(this.reactionRole.server_id);
+            this.reactionRole.emojiroles.forEach((emojiRole) => {
+                if (reaction.emoji.toString() === emojiRole.emoji) {
                     let serverUser = server.members.cache.get(user.id);
+                    const role = server.roles.cache.get(emojiRole.role);
                     serverUser.roles.remove(role);
                 }
             });
@@ -83,17 +108,4 @@ export class ReactionRoleListener {
     }
 };
 
-const emojiroleSchema = new Schema({
-    emoji : String,
-    role : String
-})
-
-const reactionRoleSchema = new Schema({
-    server_id : String,
-    channel_id : String,
-    message_id : String,
-    emojiroles : [emojiroleSchema]
-})
-
-export const EmojiroleModel = mongoose.model('Emojirole', emojiroleSchema)
-export const ReactionRoleModel = mongoose.model('ReactionRole', reactionRoleSchema)
+export const ActiveReactionRoleListeners = Array<ReactionRoleListener>();

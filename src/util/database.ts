@@ -1,18 +1,9 @@
-import mongoose from 'mongoose';
-import { ReactionRoleModel } from '../reactionRoles/reactionRolesListener'
+import Level from 'level'
+import Sub from 'subleveldown'
 
-export class Database {
-    private uri : string;
-    
-    constructor(uri : string) {
-        this.uri = uri;
-        this._connect();
-    }
+export const Database = Level('db');
 
-    private _connect() {
-        mongoose.connect(this.uri, { useNewUrlParser: true, useUnifiedTopology: true});
-    }
-
-    restore() {
-    }
+export async function prepareDB() {
+    const ReactionRolesDB = Sub(Database, 'reactionroles');
+    await ReactionRolesDB.put('manifest', JSON.stringify([]))
 }

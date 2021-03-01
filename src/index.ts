@@ -1,10 +1,11 @@
 import {Bot} from './util/bot';
-import {Database} from './util/database'
 import config from './config.json';
+import { prepareDB } from './util/database';
 
-const database = new Database(config.mongoString);
-const bot = new Bot(config.token, database);
+const bot = new Bot(config.token);
 
-database.restore();
+// prepareDB();
+
+
 bot.init();
 bot.on('ready', () => bot.run());

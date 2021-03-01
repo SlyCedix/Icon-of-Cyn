@@ -1,7 +1,9 @@
 import { Client, Message, MessageEmbed } from 'discord.js'
-import { EmojiroleModel, ReactionRoleListener, ReactionRoleModel } from './reactionRolesListener';
+import Sub from 'subleveldown'
 
+import { EmojiRole, ReactionRole, ReactionRoleListener, ActiveReactionRoleListeners } from '../reactionRoles/reactionRolesListener'
 import { CommandListener } from '../util/commandListener'
+import { Database } from '../util/database'
 
 export class ReactionRoleCommand extends CommandListener {
     constructor(client : Client) {
@@ -33,13 +35,19 @@ export class ReactionRoleCommand extends CommandListener {
         var server_id = message.guild.id;
         var channel_id = message.channel.id;
         var message_id = args[1];
-        var emojirolesMap = new Map<string, string>();
+        var emojiroles = new Array<EmojiRole>();
 
         args.splice(0,2);
 
-        var emojiId;
+        const ReactionRoleDB = await Sub(Database, 'reactionroles');
+        const Manifest = JSON.parse(await ReactionRoleDB.get('manifest'));
 
-        var emojiroles = [];
+        if(Manifest.includes(message_id)) {
+            this._usage(message, "meassage already has reaction roles")
+            return;
+        }
+
+        var emojiId;
 
         args.forEach(async (id, idx) => {
             if(idx % 2 === 0) {
@@ -51,33 +59,25 @@ export class ReactionRoleCommand extends CommandListener {
                 if ( role === null ) this._usage(message, "invalid role");
                 id = id.slice(3, -1);
 
-                emojirolesMap.set(emojiId, id);
-
-                emojiroles.push(new EmojiroleModel({
-                    emoji: emojiId,
-                    role: id
-                }))
+                emojiroles.push(new EmojiRole(emojiId, id));
 
                 messageTarget.react(emojiId);
             }
         })
 
-        const model = new ReactionRoleModel({
-            server_id : server_id,
-            channel_id : channel_id,
-            message_id : message_id,
-            emojiroles : emojiroles
-        })
+        const reactionRole = new ReactionRole(server_id, channel_id, message_id, emojiroles);
+        await Manifest.push(message_id);
+        await ReactionRoleDB.put('manifest', JSON.stringify(Manifest));
+        await ReactionRoleDB.put(message_id, JSON.stringify(reactionRole));
 
-        new ReactionRoleListener(this.client, server_id, message_id, emojirolesMap);
-        await model.save();
+        ActiveReactionRoleListeners.push(new ReactionRoleListener(this.client, reactionRole));
 
         var emojiString = "";
         var roleString = "";
 
-        emojirolesMap.forEach((value, key) => {
-            emojiString+=`${key}\n`;
-            roleString+=`${message.guild.roles.resolve(value).name}\n`;
+        emojiroles.forEach((emojirole) => {
+            emojiString+=`${emojirole.emoji}\n`;
+            roleString+=`${message.guild.roles.resolve(emojirole.role).name}\n`;
         });
 
         const embed = new MessageEmbed()

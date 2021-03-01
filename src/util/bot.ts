@@ -1,23 +1,20 @@
-import { Channel, Client, Message, TextChannel } from 'discord.js';
-import { EventEmitter } from 'events';
-import { Database } from './database';
+import { Client } from 'discord.js'
+import { EventEmitter } from 'events'
+import Sub from 'subleveldown'
 
-import { ReactionRoleListener, ReactionRoleModel } from '../reactionRoles/reactionRolesListener'
-
-import mongoose from 'mongoose';
-import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand';
+import { Database } from '../util/database';
+import { ReactionRoleListener, ReactionRole, ActiveReactionRoleListeners } from '../reactionRoles/reactionRolesListener'
+import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand'
 
 export class Bot {
     private client : Client;
     private token : string;
     private emitter : EventEmitter;
-    private database : Database;
-    
-    constructor(token: string, database: Database) {
+
+    constructor(token: string) {
         this.client = new Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION']});
         this.emitter = new EventEmitter();
         this.token = token;
-        this.database = database;
     }
 
     on(event: string | symbol, listener: (...args: any[]) => void) {
@@ -34,25 +31,13 @@ export class Bot {
 
     async run() {
         // Restore from database
-        var reactionRoles = await ReactionRoleModel.find().lean();
-        reactionRoles.forEach(async(reactionRole) => {
-            var server_id = reactionRole["server_id"];
-            var channel_id = reactionRole["channel_id"];
-            var message_id = reactionRole["message_id"];
-            var emojirolesObject = reactionRole["emojiroles"];
+        const reactionRoleDB = await Sub(Database, 'reactionroles')
+        const reactionRoleManifest = JSON.parse(await reactionRoleDB.get('manifest')) as Array<string>;
 
-            var channel = await this.client.channels.fetch(channel_id)
-                            .then(c => { return c as TextChannel });
-
-            var message = await channel.messages.fetch(message_id);
-            
-            var emojirolesMap = new Map<string, string>();
-            emojirolesObject.forEach((emojirole) => {
-                emojirolesMap.set(emojirole["emoji"], emojirole["role"]);
-                message.react(emojirole["emoji"]);
-            })
-            new ReactionRoleListener(this.client, server_id, message_id, emojirolesMap);
-        });
+        reactionRoleManifest.forEach(async(message_id) => {
+            var reactionRole = JSON.parse(await reactionRoleDB.get(message_id)) as ReactionRole;
+            ActiveReactionRoleListeners.push(new ReactionRoleListener(this.client, reactionRole))
+        })
 
         // Register commands
         new ReactionRoleCommand(this.client);

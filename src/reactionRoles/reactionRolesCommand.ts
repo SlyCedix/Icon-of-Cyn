@@ -93,14 +93,21 @@ export class ReactionRoleCommand extends CommandListener {
     }
     
     private async _usage(message, error) {
-        const embed = new MessageEmbed()
+        var embed = new MessageEmbed()
             .setTitle(`Reaction Roles`)
             .setDescription(`Allow users to react to a specified message with emojis to set their role`)
             .setColor('#357EC7')
             .addFields(
-                {name: '**Usage**', value: `\`!reactionroles $message_id $emoji_1 $rank_1 $emoji_2 $rank_2 ...\``, inline: true}
+                {name: '**Usage**', value: `\`!reactionroles $message_id $emoji_1 $rank_1 $emoji_2 $rank_2 ...\``}
             );
         
+        if(error != undefined) {
+            embed.setColor('#A52856')
+            .addFields(
+                {name: '**Error**', value: `${error}`}
+            );
+        }
+
         message.channel.send(embed);
     }
 }

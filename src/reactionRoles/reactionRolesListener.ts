@@ -1,4 +1,4 @@
-import { Client} from 'discord.js';
+import { Client } from 'discord.js';
 
 export class EmojiRole {
     emoji : string;
@@ -31,17 +31,18 @@ export class ReactionRole {
 export class ReactionRoleListener {
     private client : Client;
     private reactionRole : ReactionRole;
+    message_id : string;
 
     constructor( client : Client,
                 reactionRole : ReactionRole) {
         this.client = client;
         this.reactionRole = reactionRole;
+        this.message_id = reactionRole.message_id;
 
-        this.client.on('messageReactionAdd', (reaction, user) => this._onMessageReactionAdd(reaction, user));
-        this.client.on('messageReactionRemove', (reaction, user) => this._onMessageReactionRemove(reaction, user));
+        this.enable();
     }
 
-    private async _onMessageReactionAdd(reaction, user) {
+    private _onMessageReactionAdd = async (reaction, user) => {
         if (reaction.partial) {
             try { 
                 await reaction.fetch();
@@ -74,7 +75,7 @@ export class ReactionRoleListener {
         }
     }
 
-    private async _onMessageReactionRemove(reaction, user) {
+    private _onMessageReactionRemove = async (reaction, user) => {
         if (reaction.partial) {
             try { 
                 await reaction.fetch();
@@ -105,6 +106,16 @@ export class ReactionRoleListener {
                 }
             });
         }
+    }
+
+    enable() {
+        this.client.on('messageReactionAdd', this._onMessageReactionAdd);
+        this.client.on('messageReactionRemove', this._onMessageReactionRemove);
+    }
+
+    disable() {
+        this.client.removeListener('messageReactionAdd', this._onMessageReactionAdd);
+        this.client.removeListener('messageReactionRemove', this._onMessageReactionRemove);
     }
 };
 

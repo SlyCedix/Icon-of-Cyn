@@ -5,6 +5,7 @@ import Sub from 'subleveldown'
 import { Database } from '../util/database';
 import { ReactionRoleListener, ReactionRole, ActiveReactionRoleListeners } from '../reactionRoles/reactionRolesListener'
 import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand'
+import { DelReactionRolesCommand } from '../reactionRoles/delReactionRolesCommand';
 
 export class Bot {
     private client : Client;
@@ -25,7 +26,11 @@ export class Bot {
         this.client.login(this.token);
 
         this.client.on('ready', () => {
+            console.log(`Logged in as ${this.client.user.username}`);
             this.emitter.emit('ready');
+            this.client.user.setPresence({
+                status: "dnd"
+            })
         });
     }
 
@@ -41,6 +46,11 @@ export class Bot {
 
         // Register commands
         new ReactionRoleCommand(this.client);
+        new DelReactionRolesCommand(this.client);
 
+        console.log("Bot Started");
+        this.client.user.setPresence({
+            status: "online"
+        })
     }
 }

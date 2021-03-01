@@ -9,24 +9,26 @@ export class ReactionRoleCommand extends CommandListener {
     constructor(client : Client) {
         super(client, 
             "!reactionroles", 
-            "Add reactionroles to a message");
+            "Add reactionroles to a message",
+            ['MANAGE_ROLES']);
 
         this.on("commandMatched", (args, message) => this._onCommandMatched(args, message));
+        this.on("insufficientPerms", (args, message) => this._usage(message, `Insufficient Permissions`));
     }
 
     private async _onCommandMatched(args, message : Message) {
         if(args.length < 4) {
-            this._usage(message, "not enough arguments"); 
+            this._usage(message, "Not enough arguments"); 
             return;
         }
         if(args.length % 2 != 0) {
-            this._usage(message, "emoji/role count mismatch");
+            this._usage(message, "Emoji/Role Count Mismatch");
             return;
         }
 
         var messageTarget = await message.channel.messages.fetch(args[1])
             .catch( () => {
-                this._usage(message, "invalid message");
+                this._usage(message, "Could not locate message");
                 return null;
             });
 
@@ -43,7 +45,7 @@ export class ReactionRoleCommand extends CommandListener {
         const Manifest = JSON.parse(await ReactionRoleDB.get('manifest'));
 
         if(Manifest.includes(message_id)) {
-            this._usage(message, "meassage already has reaction roles")
+            this._usage(message, "Message already has reaction roles")
             return;
         }
 
@@ -52,11 +54,11 @@ export class ReactionRoleCommand extends CommandListener {
         args.forEach(async (id, idx) => {
             if(idx % 2 === 0) {
                 var emoji = message.guild.emojis.resolveIdentifier(id);
-                if( emoji === null ) this._usage(message, "invalid emoji");
+                if( emoji === null ) this._usage(message, `Invalid emoji: ${id}`);
                 emojiId = id;
             } else {
                 var role = message.guild.roles.resolveID(id);
-                if ( role === null ) this._usage(message, "invalid role");
+                if ( role === null ) this._usage(message, `Invalid role: ${id}`);
                 id = id.slice(3, -1);
 
                 emojiroles.push(new EmojiRole(emojiId, id));
@@ -91,7 +93,7 @@ export class ReactionRoleCommand extends CommandListener {
 
         message.channel.send(embed);
     }
-    
+
     private async _usage(message, error) {
         var embed = new MessageEmbed()
             .setTitle(`Reaction Roles`)

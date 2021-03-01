@@ -1,6 +1,6 @@
 .PHONY: all compile run
 
-all: compile run
+all: clean compile
 
 compile: bin/index.js
 

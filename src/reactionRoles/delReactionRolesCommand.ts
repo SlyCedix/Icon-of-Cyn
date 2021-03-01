@@ -1,4 +1,3 @@
-import { Console } from "console";
 import { Client, Message, MessageEmbed } from "discord.js"
 import Sub from "subleveldown"
 
@@ -10,14 +9,16 @@ export class DelReactionRolesCommand extends CommandListener {
     constructor(client : Client) {
         super(client, 
             "!delreactionroles", 
-            "Removes reaction roles from a message");
+            "Removes reaction roles from a message",
+            ['MANAGE_ROLES']);
 
         this.on("commandMatched", (args, message) => this._onCommandMatched(args, message));
+        this.on("insufficientPerms", (args, message) => this._usage(message, `Insufficient Permissions`));
     }
 
     private async _onCommandMatched(args, message) {
         if(args.length != 2) {
-            this._usage(message, "incorrect number of arguments"); 
+            this._usage(message, "Incorrect number of arguments"); 
             return;
         }
 
@@ -25,7 +26,7 @@ export class DelReactionRolesCommand extends CommandListener {
         var Manifest = JSON.parse(await ReactionRoleDB.get('manifest'));
 
         var messageTarget = await message.channel.messages.fetch(args[1]).catch( () => {
-            this._usage(message, "invalid message: message not found");
+            this._usage(message, "Could not locate message");
             return null;
         });
 
@@ -36,7 +37,7 @@ export class DelReactionRolesCommand extends CommandListener {
         })
 
         if ( idx === undefined ) {
-            this._usage(message, "invalid message: reactionroles not found");
+            this._usage(message, "Message does not have reactionroles");
             return;
         }
         Manifest = Manifest.filter((value) => {

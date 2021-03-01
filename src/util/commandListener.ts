@@ -1,31 +1,33 @@
-import { Client, Message } from "discord.js";
+import { Client, Message, PermissionString } from "discord.js";
 import EventEmitter from "events";
 
-export class CommandListener {
+export class CommandListener extends EventEmitter{
     client : Client;
     command : string;
     description : string;
-    private emitter : EventEmitter;
+    permissions : Array<PermissionString>;
 
     constructor(client : Client,
                 command : string,
-                description : string) {
+                description : string,
+                permissions : Array<PermissionString>) {
+        super();
         this.client = client;
         this.command = command;
         this.description = description;
-        this.emitter = new EventEmitter();
-
+        this.permissions = permissions;
+    
         this.client.on('message', (message) => this._matchCommand(message));
-    }
-
-    on(event: string | symbol, listener: (...args: any[]) => void) {
-        return this.emitter.on(event, listener);
     }
 
     private _matchCommand(message : Message) {
         var args = message.content.split(" ");
         if(args[0] === this.command){
-            this.emitter.emit("commandMatched", args, message)
+            if(message.member.hasPermission(this.permissions)) {
+                this.emit("commandMatched", args, message);
+            } else {
+                this.emit("insufficientPerms", args, message);
+            }
         }
     }
 }

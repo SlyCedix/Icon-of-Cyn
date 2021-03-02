@@ -1,7 +1,4 @@
-import {Bot} from './util/bot';
-import config from './config.json';
-
-const bot = new Bot(config.token);
+import { bot } from './util/bot';
 
 bot.init();
 bot.on('ready', () => bot.run());

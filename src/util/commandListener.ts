@@ -1,20 +1,19 @@
-import { Client, Message, PermissionString } from "discord.js";
+import { Message, PermissionString } from "discord.js";
 import EventEmitter from "events";
 
+import { bot } from "./bot";
+
 export class CommandListener extends EventEmitter{
-    client : Client;
     command : string;
     permissions : Array<PermissionString>;
 
-    constructor(client : Client,
-                command : string,
+    constructor(command : string,
                 permissions : Array<PermissionString>) {
         super();
-        this.client = client;
         this.command = command;
         this.permissions = permissions;
     
-        this.client.on('message', this._matchCommand);
+        bot.client.on('message', this._matchCommand);
     }
 
     private  _matchCommand = async(message : Message) => {

@@ -1,34 +1,33 @@
 import { Client } from 'discord.js'
 import { EventEmitter } from 'events'
-import Sub from 'subleveldown'
 
-import { Database } from '../util/database';
-import { ReactionRoleListener, ReactionRole, ActiveReactionRoleListeners } from '../reactionRoles/reactionRolesListener'
-import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand'
-import { DelReactionRolesCommand } from '../reactionRoles/delReactionRolesCommand';
-import { MusicSearchCommand } from '../music/musicSearch';
+import { MusicSearchCommand } from '../modules/music/musicSearch';
+import { MusicQueue } from '../modules/music/musicQueue';
 
-export class Bot {
-    private client : Client;
-    private token : string;
-    private emitter : EventEmitter;
+import config  from '../config.json'
+import { ReactionRoles } from '../modules/reactionRoles';
 
-    constructor(token: string) {
+class Bot {
+    client : Client;
+    private _token : string;
+    private _emitter : EventEmitter;
+
+    constructor() {
         this.client = new Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION']});
-        this.emitter = new EventEmitter();
-        this.token = token;
+        this._emitter = new EventEmitter();
+        this._token = config.token;
     }
 
     on(event: string | symbol, listener: (...args: any[]) => void) {
-        return this.emitter.on(event, listener);
+        return this._emitter.on(event, listener);
     }
 
     async init() {
-        this.client.login(this.token);
+        this.client.login(this._token);
 
         this.client.on('ready', () => {
             console.log(`Logged in as ${this.client.user.username}`);
-            this.emitter.emit('ready');
+            this._emitter.emit('ready');
             this.client.user.setPresence({
                 status: "dnd"
             })
@@ -37,18 +36,15 @@ export class Bot {
 
     async run() {
         // Restore from database
-        const reactionRoleDB = await Sub(Database, 'reactionroles')
-        const reactionRoleManifest = JSON.parse(await reactionRoleDB.get('manifest')) as Array<string>;
+        new ReactionRoles();
 
-        reactionRoleManifest.forEach(async(message_id) => {
-            var reactionRole = JSON.parse(await reactionRoleDB.get(message_id)) as ReactionRole;
-            ActiveReactionRoleListeners.push(new ReactionRoleListener(this.client, reactionRole))
-        })
+        const musicQueues = new Map<string, MusicQueue>();
 
-        // Register commands
-        new ReactionRoleCommand(this.client);
-        new DelReactionRolesCommand(this.client);
-        new MusicSearchCommand(this.client);
+        this.client.guilds.valueOf().forEach((guild) => {
+            musicQueues.set(`guild.id`, new MusicQueue);
+        });
+
+        new MusicSearchCommand(musicQueues);
 
         console.log("Bot Started");
         this.client.user.setPresence({
@@ -56,3 +52,5 @@ export class Bot {
         })
     }
 }
+
+export const bot = new Bot();

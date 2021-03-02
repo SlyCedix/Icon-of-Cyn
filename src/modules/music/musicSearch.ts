@@ -1,12 +1,13 @@
-import { Client, Message, MessageEmbed } from "discord.js";
+import { Message, MessageEmbed } from "discord.js";
 import YouTube from "ytsr";
-import { CommandListener } from "../util/commandListener";
+import { bot } from "../../util/bot";
+import { CommandListener } from "../../util/commandListener";
+import { MusicQueue } from "./musicQueue";
 import { MusicSearchResultListener } from "./musicSearchResultListener";
 
 export class MusicSearchCommand extends CommandListener {
-    constructor(client : Client) {
-        super(client,
-            "!search",
+    constructor(musicQueues : Map<string, MusicQueue>) {
+        super("!search",
             ["SPEAK"]);
 
         this.on("commandMatched", this._onCommandMatched);
@@ -53,7 +54,7 @@ export class MusicSearchCommand extends CommandListener {
             resultMessage.react(emoji);
         })
 
-        const ResultListener = new MusicSearchResultListener(this.client, message.author, resultMessage, urls);
+        const ResultListener = new MusicSearchResultListener(bot.client, message.author, resultMessage, urls);
         const onResultVoted = async (idx) => {
             const Result = Results.items[idx];
             const Embed = new MessageEmbed()
@@ -65,7 +66,10 @@ export class MusicSearchCommand extends CommandListener {
         }
 
         ResultListener.on(`resultVoted`, onResultVoted);
-        setTimeout(() => { ResultListener.removeListener(`resultVoted`, onResultVoted) }, 60000)
+        setTimeout(() => { 
+            ResultListener.disable();
+            ResultListener.removeListener(`resultVoted`, onResultVoted);
+        }, 60000)
     }
 
     private async _usage(message : Message, error : string) {

@@ -5,7 +5,6 @@ export class MusicSearchResultListener {
     private _client : Client;
     private _user : User;
     private _resultMessage : Message;
-    private _urls : Array<string>;
     private _eventEmitter : EventEmitter;
 
     constructor(client : Client,
@@ -15,10 +14,9 @@ export class MusicSearchResultListener {
             this._client = client;
             this._user = user;
             this._resultMessage = resultMessage;
-            this._urls = urls
             this._eventEmitter = new EventEmitter();
 
-            client.on(`messageReactionAdd`, this._onMessageReactionAdd);
+            this.enable();
         }
 
     on(event: string | symbol, listener: (...args: any[]) => void) {
@@ -55,10 +53,18 @@ export class MusicSearchResultListener {
                     if(value === reaction.emoji.toString()) {
                         this._eventEmitter.emit(`resultVoted`, idx);
                         this._resultMessage.delete();
-                        this._client.removeListener(`messageReactionAdd`, this._onMessageReactionAdd);
+                        this.disable();
                     }
                 })
             }
         } 
+    }
+
+    enable() {
+        this._client.on(`messageReactionAdd`, this._onMessageReactionAdd);
+    }
+
+    disable() {
+        this._client.removeListener(`messageReactionAdd`, this._onMessageReactionAdd);
     }
 }

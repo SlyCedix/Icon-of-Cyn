@@ -9,14 +9,14 @@ export class DelReactionRolesCommand extends CommandListener {
     constructor(client : Client) {
         super(client, 
             "!delreactionroles", 
-            "Removes reaction roles from a message",
             ['MANAGE_ROLES']);
 
-        this.on("commandMatched", (args, message) => this._onCommandMatched(args, message));
-        this.on("insufficientPerms", (args, message) => this._usage(message, `Insufficient Permissions`));
+        this.on("commandMatched", this._onCommandMatched);
+        this.on("insufficientPerms", this._insufficientPerms);
+        this.on("help", this._help)
     }
 
-    private async _onCommandMatched(args, message) {
+    private _onCommandMatched = async(args, message) => {
         if(args.length != 2) {
             this._usage(message, "Incorrect number of arguments"); 
             return;
@@ -72,7 +72,7 @@ export class DelReactionRolesCommand extends CommandListener {
                 {name: '**Usage**', value: `\`!delreactionroles $message_id\``}
             );
                 
-        if(error != undefined) {
+        if(error != null) {
             embed.setColor('#A52856')
             .addFields(
                 {name: '**Error**', value: `${error}`}
@@ -81,4 +81,7 @@ export class DelReactionRolesCommand extends CommandListener {
 
         message.channel.send(embed);
     }
+
+    private _insufficientPerms = async(args, message) => this._usage(message, `Insufficient Permissions`);
+    private _help = async(message) => this._usage(message, null);
 }

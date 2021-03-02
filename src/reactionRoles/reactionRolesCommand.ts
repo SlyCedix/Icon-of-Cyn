@@ -9,14 +9,14 @@ export class ReactionRoleCommand extends CommandListener {
     constructor(client : Client) {
         super(client, 
             "!reactionroles", 
-            "Add reactionroles to a message",
             ['MANAGE_ROLES']);
 
-        this.on("commandMatched", (args, message) => this._onCommandMatched(args, message));
-        this.on("insufficientPerms", (args, message) => this._usage(message, `Insufficient Permissions`));
+        this.on("commandMatched", this._onCommandMatched);
+        this.on("insufficientPerms", this._insufficientPerms);
+        this.on("help", this._help);
     }
 
-    private async _onCommandMatched(args, message : Message) {
+    private _onCommandMatched = async(args, message) => {
         if(args.length < 4) {
             this._usage(message, "Not enough arguments"); 
             return;
@@ -112,4 +112,7 @@ export class ReactionRoleCommand extends CommandListener {
 
         message.channel.send(embed);
     }
+
+    private _insufficientPerms = async(args, message) => this._usage(message, `Insufficient Permissions`);
+    private _help = async(message) => this._usage(message, null);
 }

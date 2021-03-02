@@ -4,23 +4,20 @@ import EventEmitter from "events";
 export class CommandListener extends EventEmitter{
     client : Client;
     command : string;
-    description : string;
     permissions : Array<PermissionString>;
 
     constructor(client : Client,
                 command : string,
-                description : string,
                 permissions : Array<PermissionString>) {
         super();
         this.client = client;
         this.command = command;
-        this.description = description;
         this.permissions = permissions;
     
-        this.client.on('message', (message) => this._matchCommand(message));
+        this.client.on('message', this._matchCommand);
     }
 
-    private _matchCommand(message : Message) {
+    private  _matchCommand = async(message : Message) => {
         var args = message.content.split(" ");
         if(args[0] === this.command){
             if(message.member.hasPermission(this.permissions)) {
@@ -28,6 +25,11 @@ export class CommandListener extends EventEmitter{
             } else {
                 this.emit("insufficientPerms", args, message);
             }
+        }
+        
+        console.log(args)
+        if(args.length >= 2 && args[0] === `!help` && args[1] === this.command) {
+            this.emit("help", message);
         }
     }
 }

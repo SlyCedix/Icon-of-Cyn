@@ -1,11 +1,9 @@
 import { Client } from 'discord.js'
 import { EventEmitter } from 'events'
 
-import { MusicSearchCommand } from '../modules/music/musicSearch';
-import { MusicQueue } from '../modules/music/musicQueue';
-
 import config  from '../config.json'
 import { ReactionRoles } from '../modules/reactionRoles';
+import { Music } from '../modules/music';
 
 class Bot {
     client : Client;
@@ -35,16 +33,9 @@ class Bot {
     }
 
     async run() {
-        // Restore from database
+        // Initialize Module classes
         new ReactionRoles();
-
-        const musicQueues = new Map<string, MusicQueue>();
-
-        this.client.guilds.valueOf().forEach((guild) => {
-            musicQueues.set(`guild.id`, new MusicQueue);
-        });
-
-        new MusicSearchCommand(musicQueues);
+        new Music();
 
         console.log("Bot Started");
         this.client.user.setPresence({

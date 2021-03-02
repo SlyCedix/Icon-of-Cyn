@@ -6,6 +6,7 @@ import { Database } from '../util/database';
 import { ReactionRoleListener, ReactionRole, ActiveReactionRoleListeners } from '../reactionRoles/reactionRolesListener'
 import { ReactionRoleCommand } from '../reactionRoles/reactionRolesCommand'
 import { DelReactionRolesCommand } from '../reactionRoles/delReactionRolesCommand';
+import { MusicSearchCommand } from '../music/musicSearch';
 
 export class Bot {
     private client : Client;
@@ -47,6 +48,7 @@ export class Bot {
         // Register commands
         new ReactionRoleCommand(this.client);
         new DelReactionRolesCommand(this.client);
+        new MusicSearchCommand(this.client);
 
         console.log("Bot Started");
         this.client.user.setPresence({

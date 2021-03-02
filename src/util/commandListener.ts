@@ -27,7 +27,6 @@ export class CommandListener extends EventEmitter{
             }
         }
         
-        console.log(args)
         if(args.length >= 2 && args[0] === `!help` && args[1] === this.command) {
             this.emit("help", message);
         }
